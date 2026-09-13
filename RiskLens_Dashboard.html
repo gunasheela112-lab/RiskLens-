@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiskLens — Network Risk Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E1A;
+    --panel:#121A2B;
+    --panel-border:#22304A;
+    --text:#E7ECF5;
+    --text-dim:#8996AC;
+    --danger:#E2472D;
+    --warn:#E8A23D;
+    --safe:#2FB88A;
+    --accent:#4FA6E0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans',sans-serif;
+    line-height:1.5;
+    padding:20px;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:var(--accent);}
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+    margin-bottom:22px;
+    padding-bottom:18px;
+    border-bottom:1px solid var(--panel-border);
+  }
+  header h1{
+    font-size:26px;
+    font-weight:700;
+    margin:0 0 4px 0;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    color:var(--text-dim);
+    font-size:13.5px;
+  }
+  .badge-wrap{
+    text-align:right;
+  }
+  .badge-num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:44px;
+    font-weight:600;
+    color:var(--safe);
+    line-height:1;
+  }
+  .badge-num span{font-size:20px; color:var(--text-dim); font-weight:400;}
+  .badge-label{
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:18px;
+    margin-bottom:18px;
+  }
+  @media (max-width:880px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:18px;
+  }
+  .panel h2{
+    font-size:15px;
+    margin:0 0 4px 0;
+    font-weight:600;
+  }
+  .panel .hint{
+    font-size:12.5px;
+    color:var(--text-dim);
+    margin:0 0 12px 0;
+  }
+
+  #graph-svg{width:100%; height:auto; display:block;}
+  .vpc-label{
+    fill:var(--text-dim);
+    font-size:11px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .edge-line{
+    stroke:#2C3B57;
+    stroke-width:1.2;
+  }
+  .node-circle{
+    stroke:#0A0E1A;
+    stroke-width:1.5;
+    cursor:pointer;
+    transition:r 0.15s ease, stroke-width 0.15s ease;
+  }
+  .node-circle:hover{
+    stroke:#fff;
+    stroke-width:2;
+  }
+  .node-circle.selected{
+    stroke:#fff;
+    stroke-width:2.5;
+  }
+
+  .legend{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-top:12px;
+    font-size:11.5px;
+    color:var(--text-dim);
+  }
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+
+  #detail-empty{
+    color:var(--text-dim);
+    font-size:13.5px;
+    padding:30px 0;
+    text-align:center;
+  }
+  #detail-content{display:none;}
+  .detail-id{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:17px;
+    font-weight:600;
+    margin-bottom:2px;
+  }
+  .detail-meta{
+    font-size:12.5px;
+    color:var(--text-dim);
+    margin-bottom:14px;
+  }
+  .stat-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    padding:6px 0;
+    border-bottom:1px solid var(--panel-border);
+  }
+  .stat-row .v{font-family:'IBM Plex Mono',monospace; font-weight:600;}
+  .flags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:12px 0;
+  }
+  .flag{
+    font-size:11px;
+    padding:3px 8px;
+    border-radius:4px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .flag.bad{background:rgba(226,71,45,0.15); color:var(--danger);}
+  .flag.ok{background:rgba(47,184,138,0.15); color:var(--safe);}
+
+  #fix-btn{
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    background:var(--accent);
+    color:#08131F;
+    border:none;
+    border-radius:6px;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  #fix-btn:hover{filter:brightness(1.08);}
+  #fix-btn:disabled{background:#33415C; color:var(--text-dim); cursor:default;}
+
+  #fix-result{
+    display:none;
+    margin-top:14px;
+    padding:12px;
+    background:rgba(47,184,138,0.08);
+    border:1px solid rgba(47,184,138,0.3);
+    border-radius:6px;
+    font-size:12.5px;
+  }
+  #fix-result .arrow-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+    font-weight:600;
+    margin-top:4px;
+  }
+  #fix-result .arrow-row .from{color:var(--text-dim); text-decoration:line-through;}
+  #fix-result .arrow-row .to{color:var(--safe);}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12.5px;
+  }
+  th,td{
+    text-align:left;
+    padding:8px 6px;
+    border-bottom:1px solid var(--panel-border);
+  }
+  th{
+    color:var(--text-dim);
+    font-weight:500;
+    font-size:11px;
+    text-transform:none;
+  }
+  td.mono{font-family:'IBM Plex Mono',monospace;}
+  .tag{
+    font-size:10.5px;
+    padding:2px 6px;
+    border-radius:4px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  .bottom-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+  }
+  @media (max-width:880px){
+    .bottom-grid{grid-template-columns:1fr;}
+  }
+  #scatter-svg, #trend-svg{width:100%; height:auto;}
+  .axis-label{fill:var(--text-dim); font-size:10px; font-family:'IBM Plex Mono',monospace;}
+
+  footer{
+    text-align:center;
+    color:var(--text-dim);
+    font-size:11.5px;
+    margin-top:24px;
+    padding-top:14px;
+    border-top:1px solid var(--panel-border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>RiskLens</h1>
+    <p>Network Risk Intelligence &middot; AWS-framed multi-VPC network &middot; generated <span id="gen-date"></span></p>
+  </div>
+  <div class="badge-wrap">
+    <div class="badge-num"><span id="badge-value">—</span><span>/1000</span></div>
+    <div class="badge-label">overall network risk score (higher = safer)</div>
+  </div>
+</header>
+
+<div class="grid">
+  <div class="panel">
+    <h2>Network Topology &amp; Blast Radius</h2>
+    <p class="hint">Node size reflects blast radius. Color reflects risk score. Click any node to inspect it and simulate a fix.</p>
+    <svg id="graph-svg" viewBox="0 0 900 620"></svg>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--safe)"></span> Low risk</span>
+      <span><span class="dot" style="background:var(--warn)"></span> Medium risk</span>
+      <span><span class="dot" style="background:var(--danger)"></span> High risk</span>
+      <span>Node size &rarr; blast radius (larger = more reachable resources)</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Resource Detail</h2>
+    <p class="hint">Select a node in the graph</p>
+    <div id="detail-empty">No resource selected.<br>Click a node in the network graph.</div>
+    <div id="detail-content">
+      <div class="detail-id" id="d-id"></div>
+      <div class="detail-meta" id="d-meta"></div>
+
+      <div class="stat-row"><span>Risk score</span><span class="v" id="d-risk"></span></div>
+      <div class="stat-row"><span>Blast radius</span><span class="v" id="d-blast"></span></div>
+      <div class="stat-row"><span>Vulnerability</span><span class="v" id="d-vuln"></span></div>
+      <div class="stat-row"><span>Trend</span><span class="v" id="d-trend"></span></div>
+      <div class="stat-row"><span>Monthly cost</span><span class="v" id="d-cost"></span></div>
+
+      <div class="flags" id="d-flags"></div>
+
+      <button id="fix-btn">Simulate Fix</button>
+      <div id="fix-result">
+        <div>Fixing this resource's IAM role, encryption, MFA, and public exposure changes:</div>
+        <div class="arrow-row">Network score: <span class="from" id="fr-badge-from"></span> &rarr; <span class="to" id="fr-badge-to"></span></div>
+        <div class="arrow-row" style="font-size:13px;">This resource: <span class="from" id="fr-node-from"></span> &rarr; <span class="to" id="fr-node-to"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" style="margin-bottom:18px;">
+  <h2>Top Priority Resources — Fix First</h2>
+  <p class="hint">Ranked by composite risk score. Red badge = high-risk and high-cost.</p>
+  <table id="fixlist-table">
+    <thead>
+      <tr><th>Resource</th><th>Type</th><th>VPC</th><th>Risk</th><th>Trend</th><th>Cost/mo</th><th>Flag</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="bottom-grid">
+  <div class="panel">
+    <h2>Cost vs Risk</h2>
+    <p class="hint">Resources in the upper-right are both expensive and dangerous.</p>
+    <svg id="scatter-svg" viewBox="0 0 420 300"></svg>
+  </div>
+  <div class="panel">
+    <h2>Rising-Risk Trend (120 days)</h2>
+    <p class="hint">Anomaly score trajectory for the three fastest-rising resources.</p>
+    <svg id="trend-svg" viewBox="0 0 420 300"></svg>
+  </div>
+</div>
+
+<footer>RiskLens &middot; simulated AWS network for portfolio demonstration purposes</footer>
+
+<script>
+const DATA = {"overall_badge": 863, "nodes": [{"id": "res-000", "type": "EC2", "vpc": "Shared-Services", "x": 527.5, "y": 426.8, "risk_score": 10.93, "blast_radius_score": 80.95, "vulnerability_score": 15.0, "trend_label": "flat", "cost": 183.09, "is_public": false, "iam": "moderate", "encrypted": true, "mfa": true, "open_ports": [], "high_risk_high_cost": false, "sparkline": [12.0, 13.2, 13.5, 11.3, 13.8, 12.5, 10.9, 8.7, 7.2, 0.0, 17.1, 8.8, 9.4, 11.5, 11.2, 11.7, 10.6, 12.1, 15.1, 9.8, 11.8, 10.6, 8.6, 13.5], "fix_new_badge": 866, "fix_new_node_score": 1.9}, {"id": "res-001", "type": "RDS", "vpc": "Production", "x": 268.2, "y": 163.3, "risk_score": 6.86, "blast_radius_score": 50.79, "vulnerability_score": 15.0, "trend_label": "flat", "cost": 233.64, "is_public": false, "iam": "least-privilege", "encrypted": false, "mfa": true, "open_ports": [], "high_risk_high_cost": false, "sparkline": [7.5, 11.1, 6.0, 7.5, 9.1, 5.4, 10.0, 13.6, 11.7, 7.6, 10.4, 4.3, 8.8, 7.9, 2.6, 7.4, 10.0, 6.5, 13.0, 15.3, 15.5, 10.0, 13.1, 12.8], "fix_new_badge": 865, "fix_new_node_score": 1.2}, {"id": "res-002", "type": "LoadBalancer", "vpc": "Shared-Services", "x": 453.1, "y": 453.3, "risk_score": 100.0, "blast_radius_score": 88.89, "vulnerability_score": 99.99, "trend_label": "rising", "cost": 209.574, "is_public": true, "iam": "admin-level", "encrypted": false, "mfa": false, "open_ports": [22, 80, 3389], "high_risk_high_cost": true, "sparkline": [13.2, 12.3, 9.6, 11.9, 11.5, 20.9, 17.1, 15.5, 12.9, 16.2, 16.7, 19.4, 15.8, 22.0, 26.0, 25.0, 26.9, 29.1, 26.3, 29.9, 33.6, 28.3, 28.5, 32.6], "fix_new_badge": 891, "fix_new_node_score": 2.1}, {"id": "res-003", "type": "EC2", "vpc": "Production", "x": 244.3, "y": 284.0, "risk_score": 9.52, "blast_radius_score": 31.75, "vulnerability_score": 33.33, "trend_label": "flat", "cost": 155.19, "is_public": false, "iam": "moderate", "encrypted": false, "mfa": true, "open_ports": [22], "high_risk_high_cost": false, "sparkline": [8.7, 4.2, 6.8, 6.6, 7.4, 6.5, 0.0, 5.6, 9.5, 8.7, 8.6, 4.5, 7.1, 3.6, 5.5, 8.5, 5.3, 4.2, 9.2, 9.2, 8.7, 9.2, 10.7, 6.8], "fix_new_badge": 866, "fix_new_node_score": 0.8}, {"id": "res-004", "type": "LoadBalancer", "vpc": "Shared-Services", "x": 495.6, "y": 363.0, "risk_score": 10.47, "blast_radius_score": 63.49, "vulnerability_score": 18.33, "trend_label": "flat", "cost": 163.38, "is_public": false, "iam": "moderate", "encrypted": true, "mfa": true, "open_ports": [443], "high_risk_high_cost": false, "sparkline": [15.8, 16.9, 13.1, 11.9, 12.4, 12.2, 12.5, 12.7, 16.8, 13.2, 9.1, 12.7, 10.0, 17.7, 15.3, 19.8, 9.8, 16.8, 11.7, 16.3, 18.2, 18.5, 11.0, 11.0], "fix_new_badge": 866, "fix_new_node_score": 1.5}, {"id": "res-005", "type": "LoadBalancer", "vpc": "Shared-Services", "x": 334.6, "y": 449.7, "risk_score": 12.88, "blast_radius_score": 41.27, "vulnerability_score": 43.33, "trend_label": "improving", "cost": 122.56, "is_public": false, "iam": "over-permissioned", "encrypted": true, "mfa": false, "open_ports": [443], "high_risk_high_cost": false, "sparkline": [32.2, 37.9, 34.8, 32.8, 34.4, 32.1, 35.0, 25.1, 28.2, 29.3, 24.5, 25.1, 17.9, 22.9, 17.9, 22.8, 16.6, 20.8, 16.8, 18.9, 12.6, 12.0, 6.3, 9.4], "fix_new_badge": 867, "fix_new_node_score": 1.0}, {"id": "res-006", "type": "S3", "vpc": "Shared-Services", "x": 426.4, "y": 325.1, "risk_score": 10.47, "blast_radius_score": 63.49, "vulnerability_score": 18.33, "trend_label": "flat", "cost": 47.83, "is_public": false, "iam": "moderate", "encrypted": true, "mfa": true, "open_ports": [443], "high_risk_high_cost": false, "sparkline": [13.6, 15.1, 14.3, 12.4, 11.8, 15.9, 9.2, 21.5, 12.3, 17.3, 13.1, 18.4, 13.8, 14.6, 12.6, 14.0, 13.0, 20.9, 11.4, 15.4, 15.1, 14.6, 16.9, 16.6], "fix_new_badge": 866, "fix_new_node_score": 1.5}, {"id": "res-007", "type": "Lambda", "vpc": "Production", "x": 380.0, "y": 175.4, "risk_score": 62.5, "blast_radius_score": 55.56, "vulnerability_score": 99.99, "trend_label": "rising", "cost": 61.542, "is_public": true, "iam": "admin-level", "encrypted": false, "mfa": false, "open_ports": [22, 80, 3389], "high_risk_high_cost": false, "sparkline": [11.5, 7.5, 6.5, 8.9, 13.0, 8.6, 9.1, 21.1, 18.5, 17.4, 18.5, 15.2, 16.2, 21.9, 17.8, 20.3, 24.5, 26.0, 27.2, 27.7, 28.3, 25.1, 28.1, 36.6], "fix_new_badge": 881, "fix_new_node_score": 1.3}, {"id": "res-008", "type": "S3", "vpc": "Production", "x": 217.6, "y": 217.2, "risk_score": 11.81, "blast_radius_score": 49.21, "vulnerability_score": 26.66, "trend_label": "flat", "cost": 53.97, "is_public": true, "iam": "least-privilege", "encrypted": true, "mfa": true, "open_ports": [22, 80], "high_risk_high_cost": false, "sparkline": [9.2, 7.9, 2.9, 0.0, 6.9, 3.4, 6.7, 4.3, 4.2, 0.0, 1.8, 6.5, 12.7, 5.2, 1.6, 3.8, 2.1, 2.7, 1.9, 6.3, 4.4, 4.2, 6.8, 5.9], "fix_new_badge": 866, "fix_new_node_score": 1.2}, {"id": "res-009", "type": "S3", "vpc": "Production", "x": 351.6, "y": 227.0, "risk_score": 2.14, "blast_radius_score": 23.81, "vulnerability_score": 10.0, "trend_label": "flat", "cost": 44.58, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": false, "open_ports": [], "high_risk_high_cost": false, "sparkline": [3.7, 2.0, 3.7, 9.1, 8.6, 3.0, 0.0, 0.0, 6.0, 6.3, 3.7, 0.0, 2.0, 1.6, 1.1, 1.8, 5.0, 6.1, 4.8, 6.1, 4.0, 3.5, 5.1, 4.6], "fix_new_badge": 864, "fix_new_node_score": 0.6}, {"id": "res-010", "type": "Lambda", "vpc": "Production", "x": 154.4, "y": 110.6, "risk_score": 15.0, "blast_radius_score": 55.56, "vulnerability_score": 30.0, "trend_label": "flat", "cost": 34.18, "is_public": true, "iam": "least-privilege", "encrypted": true, "mfa": false, "open_ports": [], "high_risk_high_cost": false, "sparkline": [15.3, 8.2, 9.6, 15.5, 12.7, 15.1, 10.5, 19.7, 12.3, 10.3, 14.3, 11.0, 14.2, 17.1, 14.2, 13.3, 17.4, 14.8, 17.2, 14.5, 11.9, 11.2, 13.0, 14.8], "fix_new_badge": 867, "fix_new_node_score": 1.3}, {"id": "res-011", "type": "EC2", "vpc": "Staging", "x": 763.0, "y": 253.2, "risk_score": 1.26, "blast_radius_score": 9.52, "vulnerability_score": 18.33, "trend_label": "improving", "cost": 109.69, "is_public": false, "iam": "least-privilege", "encrypted": false, "mfa": true, "open_ports": [22], "high_risk_high_cost": false, "sparkline": [39.3, 37.0, 38.4, 35.0, 35.2, 37.7, 25.4, 31.4, 25.2, 21.8, 23.9, 26.5, 20.6, 18.9, 22.9, 16.2, 20.3, 13.7, 14.8, 15.6, 13.9, 15.6, 3.4, 8.9], "fix_new_badge": 864, "fix_new_node_score": 0.2}, {"id": "res-012", "type": "LoadBalancer", "vpc": "Shared-Services", "x": 316.7, "y": 474.0, "risk_score": 14.14, "blast_radius_score": 52.38, "vulnerability_score": 30.0, "trend_label": "flat", "cost": 104.45, "is_public": false, "iam": "over-permissioned", "encrypted": true, "mfa": true, "open_ports": [], "high_risk_high_cost": false, "sparkline": [2.8, 11.5, 12.2, 11.4, 10.9, 9.3, 6.1, 9.4, 16.2, 6.2, 7.5, 5.7, 8.6, 12.5, 9.7, 11.8, 6.5, 10.8, 11.5, 10.3, 10.2, 14.2, 7.8, 6.3], "fix_new_badge": 867, "fix_new_node_score": 1.3}, {"id": "res-013", "type": "EC2", "vpc": "Shared-Services", "x": 571.4, "y": 395.7, "risk_score": 16.74, "blast_radius_score": 58.73, "vulnerability_score": 31.66, "trend_label": "flat", "cost": 225.33, "is_public": false, "iam": "least-privilege", "encrypted": false, "mfa": false, "open_ports": [22, 80], "high_risk_high_cost": true, "sparkline": [7.5, 14.4, 7.2, 7.3, 10.3, 14.7, 15.0, 12.4, 15.2, 10.3, 13.4, 8.9, 10.2, 7.6, 5.2, 8.6, 3.9, 7.6, 7.2, 14.1, 15.8, 14.9, 5.3, 14.3], "fix_new_badge": 868, "fix_new_node_score": 1.4}, {"id": "res-014", "type": "EC2", "vpc": "Staging", "x": 520.0, "y": 138.7, "risk_score": 8.57, "blast_radius_score": 47.62, "vulnerability_score": 19.99, "trend_label": "flat", "cost": 198.96, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": false, "open_ports": [22, 80, 3389], "high_risk_high_cost": false, "sparkline": [11.3, 11.2, 3.8, 13.6, 8.6, 3.5, 3.6, 8.7, 10.8, 9.3, 6.7, 7.7, 9.7, 4.8, 8.8, 14.1, 2.4, 7.6, 10.4, 10.2, 8.8, 7.8, 9.0, 11.1], "fix_new_badge": 866, "fix_new_node_score": 1.1}, {"id": "res-015", "type": "S3", "vpc": "Staging", "x": 690.0, "y": 227.3, "risk_score": 60.72, "blast_radius_score": 53.97, "vulnerability_score": 99.99, "trend_label": "rising", "cost": 105.48, "is_public": true, "iam": "admin-level", "encrypted": false, "mfa": false, "open_ports": [22, 80, 3389], "high_risk_high_cost": false, "sparkline": [8.4, 8.8, 9.3, 12.8, 13.5, 13.9, 17.1, 8.7, 17.8, 16.0, 19.7, 21.6, 20.6, 21.8, 21.3, 29.0, 26.7, 22.0, 30.1, 30.8, 31.1, 33.7, 29.6, 35.5], "fix_new_badge": 880, "fix_new_node_score": 1.3}, {"id": "res-016", "type": "RDS", "vpc": "Staging", "x": 692.8, "y": 294.4, "risk_score": 15.71, "blast_radius_score": 34.92, "vulnerability_score": 49.99, "trend_label": "flat", "cost": 297.42, "is_public": false, "iam": "over-permissioned", "encrypted": true, "mfa": false, "open_ports": [22, 80, 3389], "high_risk_high_cost": true, "sparkline": [12.0, 10.9, 17.1, 13.4, 13.0, 12.7, 15.1, 10.4, 10.5, 15.8, 6.3, 6.6, 8.6, 14.2, 4.5, 10.7, 10.2, 15.7, 12.3, 9.3, 15.1, 8.4, 6.0, 8.4], "fix_new_badge": 868, "fix_new_node_score": 0.8}, {"id": "res-017", "type": "S3", "vpc": "Shared-Services", "x": 453.1, "y": 595.9, "risk_score": 0.0, "blast_radius_score": 47.62, "vulnerability_score": 0.0, "trend_label": "flat", "cost": 76.97, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": true, "open_ports": [], "high_risk_high_cost": false, "sparkline": [11.3, 7.2, 11.7, 10.4, 12.3, 14.2, 13.8, 9.2, 11.3, 10.8, 9.6, 9.5, 14.2, 12.1, 9.9, 8.0, 10.7, 5.5, 10.5, 11.4, 12.6, 10.7, 8.7, 16.0], "fix_new_badge": 863, "fix_new_node_score": 1.1}, {"id": "res-018", "type": "EC2", "vpc": "Shared-Services", "x": 513.2, "y": 537.0, "risk_score": 7.14, "blast_radius_score": 31.75, "vulnerability_score": 24.99, "trend_label": "flat", "cost": 164.54, "is_public": false, "iam": "moderate", "encrypted": true, "mfa": true, "open_ports": [22, 80, 3389], "high_risk_high_cost": false, "sparkline": [8.3, 10.9, 12.3, 11.2, 8.3, 9.8, 11.3, 22.4, 16.4, 19.5, 16.7, 17.1, 10.5, 18.5, 14.4, 16.6, 17.3, 18.5, 13.8, 11.0, 16.7, 16.7, 11.9, 9.0], "fix_new_badge": 865, "fix_new_node_score": 0.8}, {"id": "res-019", "type": "RDS", "vpc": "Shared-Services", "x": 459.3, "y": 320.0, "risk_score": 7.93, "blast_radius_score": 58.73, "vulnerability_score": 15.0, "trend_label": "flat", "cost": 213.98, "is_public": false, "iam": "least-privilege", "encrypted": false, "mfa": true, "open_ports": [], "high_risk_high_cost": false, "sparkline": [10.8, 5.5, 3.3, 11.3, 5.1, 1.4, 1.6, 0.0, 9.3, 8.4, 4.7, 14.4, 9.6, 8.2, 12.7, 0.0, 6.8, 12.6, 10.8, 7.0, 5.1, 7.9, 5.8, 7.1], "fix_new_badge": 865, "fix_new_node_score": 1.4}, {"id": "res-020", "type": "LoadBalancer", "vpc": "Staging", "x": 543.7, "y": 87.0, "risk_score": 4.71, "blast_radius_score": 52.38, "vulnerability_score": 10.0, "trend_label": "flat", "cost": 122.3, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": false, "open_ports": [], "high_risk_high_cost": false, "sparkline": [13.7, 8.3, 13.2, 11.9, 8.3, 14.1, 9.2, 19.9, 14.4, 10.6, 13.1, 10.8, 11.4, 19.4, 14.2, 10.6, 12.2, 13.2, 4.1, 13.3, 9.3, 10.9, 11.7, 14.2], "fix_new_badge": 864, "fix_new_node_score": 1.3}, {"id": "res-021", "type": "RDS", "vpc": "Production", "x": 248.2, "y": 232.3, "risk_score": 15.5, "blast_radius_score": 49.21, "vulnerability_score": 34.99, "trend_label": "flat", "cost": 342.5, "is_public": false, "iam": "least-privilege", "encrypted": false, "mfa": false, "open_ports": [22, 80, 3389], "high_risk_high_cost": true, "sparkline": [14.5, 14.5, 11.0, 12.8, 17.5, 15.9, 19.0, 13.3, 11.1, 10.7, 16.0, 14.8, 13.0, 12.2, 11.8, 12.1, 14.8, 9.6, 13.2, 16.8, 13.9, 15.7, 9.1, 11.4], "fix_new_badge": 867, "fix_new_node_score": 1.2}, {"id": "res-022", "type": "S3", "vpc": "Staging", "x": 591.8, "y": 66.6, "risk_score": 4.28, "blast_radius_score": 47.62, "vulnerability_score": 9.99, "trend_label": "flat", "cost": 75.96, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": true, "open_ports": [22, 80, 3389], "high_risk_high_cost": false, "sparkline": [10.6, 13.8, 13.1, 13.6, 3.6, 9.3, 10.0, 6.6, 12.0, 11.3, 21.0, 10.6, 8.8, 15.9, 14.0, 7.6, 10.9, 9.9, 14.9, 9.8, 12.3, 12.7, 11.3, 13.4], "fix_new_badge": 864, "fix_new_node_score": 1.1}, {"id": "res-023", "type": "S3", "vpc": "Shared-Services", "x": 475.3, "y": 393.9, "risk_score": 22.49, "blast_radius_score": 100.0, "vulnerability_score": 24.99, "trend_label": "flat", "cost": 47.12, "is_public": false, "iam": "moderate", "encrypted": true, "mfa": true, "open_ports": [22, 80, 3389], "high_risk_high_cost": false, "sparkline": [12.7, 9.4, 10.1, 7.6, 9.5, 9.8, 9.2, 13.4, 12.1, 11.3, 16.4, 22.6, 10.8, 12.2, 15.0, 8.3, 12.3, 10.3, 8.3, 9.9, 6.8, 7.0, 6.5, 9.1], "fix_new_badge": 869, "fix_new_node_score": 2.4}, {"id": "res-024", "type": "Lambda", "vpc": "Staging", "x": 572.5, "y": 145.5, "risk_score": 9.86, "blast_radius_score": 73.02, "vulnerability_score": 15.0, "trend_label": "flat", "cost": 45.18, "is_public": false, "iam": "least-privilege", "encrypted": false, "mfa": true, "open_ports": [], "high_risk_high_cost": false, "sparkline": [14.8, 12.8, 6.8, 10.7, 8.9, 19.0, 11.3, 7.4, 8.0, 10.1, 13.1, 13.2, 11.9, 17.6, 16.3, 16.7, 12.5, 15.6, 9.4, 11.4, 10.1, 16.5, 20.1, 11.9], "fix_new_badge": 866, "fix_new_node_score": 1.8}, {"id": "res-025", "type": "LoadBalancer", "vpc": "Production", "x": 196.4, "y": 53.9, "risk_score": 6.0, "blast_radius_score": 44.44, "vulnerability_score": 15.0, "trend_label": "flat", "cost": 127.61, "is_public": false, "iam": "moderate", "encrypted": true, "mfa": true, "open_ports": [], "high_risk_high_cost": false, "sparkline": [6.1, 7.3, 11.1, 7.0, 7.0, 5.3, 2.2, 10.0, 7.2, 9.8, 4.4, 10.8, 0.3, 5.1, 6.8, 4.2, 6.2, 7.2, 10.9, 6.6, 4.0, 9.0, 2.5, 3.0], "fix_new_badge": 865, "fix_new_node_score": 1.1}, {"id": "res-026", "type": "Lambda", "vpc": "Shared-Services", "x": 483.4, "y": 576.5, "risk_score": 1.57, "blast_radius_score": 52.38, "vulnerability_score": 3.33, "trend_label": "flat", "cost": 42.42, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": true, "open_ports": [22], "high_risk_high_cost": false, "sparkline": [6.3, 5.4, 5.0, 5.2, 0.0, 3.6, 0.5, 8.7, 0.0, 0.5, 3.7, 2.7, 5.7, 4.0, 3.2, 5.8, 2.1, 9.5, 7.3, 6.2, 2.5, 6.5, 9.1, 3.5], "fix_new_badge": 863, "fix_new_node_score": 1.3}, {"id": "res-027", "type": "RDS", "vpc": "Production", "x": 157.0, "y": 68.2, "risk_score": 2.19, "blast_radius_score": 73.02, "vulnerability_score": 3.33, "trend_label": "flat", "cost": 349.93, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": true, "open_ports": [22], "high_risk_high_cost": false, "sparkline": [7.2, 7.7, 4.7, 4.3, 5.0, 3.5, 10.3, 6.6, 7.3, 5.1, 5.8, 7.0, 0.1, 6.1, 1.2, 7.8, 11.9, 0.3, 4.2, 3.5, 6.9, 3.5, 6.7, 7.5], "fix_new_badge": 864, "fix_new_node_score": 1.8}, {"id": "res-028", "type": "EC2", "vpc": "Production", "x": 182.3, "y": 268.2, "risk_score": 0.95, "blast_radius_score": 31.75, "vulnerability_score": 3.33, "trend_label": "flat", "cost": 183.75, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": true, "open_ports": [22], "high_risk_high_cost": false, "sparkline": [3.2, 4.2, 6.3, 9.5, 8.8, 10.1, 7.4, 6.1, 3.0, 5.6, 8.4, 14.0, 5.7, 6.6, 6.0, 0.0, 7.3, 3.2, 4.9, 5.3, 1.4, 7.9, 5.6, 10.3], "fix_new_badge": 863, "fix_new_node_score": 0.8}, {"id": "res-029", "type": "Lambda", "vpc": "Shared-Services", "x": 398.1, "y": 556.9, "risk_score": 10.06, "blast_radius_score": 52.38, "vulnerability_score": 26.66, "trend_label": "improving", "cost": 24.67, "is_public": true, "iam": "least-privilege", "encrypted": true, "mfa": true, "open_ports": [22, 80], "high_risk_high_cost": false, "sparkline": [38.2, 30.2, 33.2, 29.8, 34.8, 30.3, 27.5, 31.6, 21.7, 25.8, 28.5, 24.6, 20.8, 19.9, 19.3, 19.7, 20.8, 11.9, 10.3, 14.1, 8.7, 5.4, 13.8, 2.2], "fix_new_badge": 866, "fix_new_node_score": 1.3}, {"id": "res-030", "type": "LoadBalancer", "vpc": "Staging", "x": 731.1, "y": 221.5, "risk_score": 7.74, "blast_radius_score": 39.68, "vulnerability_score": 21.66, "trend_label": "flat", "cost": 109.2, "is_public": false, "iam": "moderate", "encrypted": true, "mfa": true, "open_ports": [22, 80], "high_risk_high_cost": false, "sparkline": [5.2, 5.4, 6.7, 8.0, 7.7, 2.9, 2.7, 0.7, 12.3, 7.5, 5.1, 3.4, 10.1, 0.0, 3.7, 4.6, 6.6, 6.9, 12.2, 8.7, 9.5, 8.5, 4.6, 7.8], "fix_new_badge": 865, "fix_new_node_score": 0.9}, {"id": "res-031", "type": "EC2", "vpc": "Shared-Services", "x": 499.3, "y": 494.2, "risk_score": 1.09, "blast_radius_score": 36.51, "vulnerability_score": 3.33, "trend_label": "flat", "cost": 213.57, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": true, "open_ports": [443], "high_risk_high_cost": false, "sparkline": [13.7, 9.5, 6.9, 4.8, 7.4, 10.2, 13.4, 7.5, 6.5, 11.5, 16.3, 8.8, 10.0, 6.6, 5.3, 13.4, 11.9, 12.4, 9.5, 13.2, 12.1, 6.3, 14.4, 10.3], "fix_new_badge": 863, "fix_new_node_score": 0.9}, {"id": "res-032", "type": "LoadBalancer", "vpc": "Shared-Services", "x": 343.1, "y": 537.9, "risk_score": 1.67, "blast_radius_score": 55.56, "vulnerability_score": 3.33, "trend_label": "flat", "cost": 110.43, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": true, "open_ports": [22], "high_risk_high_cost": false, "sparkline": [2.2, 6.7, 1.5, 3.0, 1.9, 1.0, 2.2, 8.0, 6.8, 2.0, 0.3, 0.0, 3.5, 4.0, 2.6, 5.7, 4.4, 0.5, 2.3, 3.5, 2.2, 7.6, 2.6, 5.7], "fix_new_badge": 863, "fix_new_node_score": 1.3}, {"id": "res-033", "type": "EC2", "vpc": "Staging", "x": 784.8, "y": 200.6, "risk_score": 3.35, "blast_radius_score": 34.92, "vulnerability_score": 13.33, "trend_label": "improving", "cost": 156.62, "is_public": false, "iam": "least-privilege", "encrypted": true, "mfa": false, "open_ports": [443], "high_risk_high_cost": false, "sparkline": [41.6, 31.8, 31.9, 32.2, 32.2, 27.7, 28.1, 22.3, 26.2, 29.7, 26.4, 17.7, 17.4, 18.5, 18.6, 20.4, 14.7, 14.7, 12.4, 8.0, 7.3, 11.3, 8.7, 5.2], "fix_new_badge": 864, "fix_new_node_score": 0.8}, {"id": "res-034", "type": "EC2", "vpc": "Staging", "x": 710.4, "y": 165.3, "risk_score": 1.86, "blast_radius_score": 9.52, "vulnerability_score": 21.66, "trend_label": "flat", "cost": 163.07, "is_public": false, "iam": "least-privilege", "encrypted": false, "mfa": true, "open_ports": [22, 80], "high_risk_high_cost": false, "sparkline": [6.5, 11.1, 9.6, 8.0, 9.8, 3.7, 9.8, 10.1, 7.7, 6.9, 4.6, 9.1, 5.3, 5.7, 10.7, 9.0, 7.7, 10.2, 2.8, 8.6, 10.0, 6.4, 5.2, 12.7], "fix_new_badge": 864, "fix_new_node_score": 0.2}], "edges": [{"source": "res-000", "target": "res-002"}, {"source": "res-000", "target": "res-004"}, {"source": "res-001", "target": "res-008"}, {"source": "res-001", "target": "res-021"}, {"source": "res-002", "target": "res-023"}, {"source": "res-002", "target": "res-000"}, {"source": "res-003", "target": "res-021"}, {"source": "res-003", "target": "res-008"}, {"source": "res-004", "target": "res-000"}, {"source": "res-004", "target": "res-023"}, {"source": "res-005", "target": "res-012"}, {"source": "res-005", "target": "res-032"}, {"source": "res-006", "target": "res-023"}, {"source": "res-006", "target": "res-004"}, {"source": "res-007", "target": "res-009"}, {"source": "res-008", "target": "res-003"}, {"source": "res-008", "target": "res-021"}, {"source": "res-009", "target": "res-007"}, {"source": "res-010", "target": "res-027"}, {"source": "res-010", "target": "res-025"}, {"source": "res-011", "target": "res-034"}, {"source": "res-012", "target": "res-032"}, {"source": "res-012", "target": "res-005"}, {"source": "res-013", "target": "res-000"}, {"source": "res-013", "target": "res-023"}, {"source": "res-014", "target": "res-024"}, {"source": "res-014", "target": "res-020"}, {"source": "res-015", "target": "res-033"}, {"source": "res-015", "target": "res-016"}, {"source": "res-016", "target": "res-015"}, {"source": "res-016", "target": "res-030"}, {"source": "res-017", "target": "res-026"}, {"source": "res-017", "target": "res-029"}, {"source": "res-018", "target": "res-026"}, {"source": "res-018", "target": "res-031"}, {"source": "res-019", "target": "res-023"}, {"source": "res-019", "target": "res-006"}, {"source": "res-020", "target": "res-024"}, {"source": "res-020", "target": "res-022"}, {"source": "res-021", "target": "res-001"}, {"source": "res-021", "target": "res-008"}, {"source": "res-022", "target": "res-024"}, {"source": "res-022", "target": "res-020"}, {"source": "res-023", "target": "res-000"}, {"source": "res-023", "target": "res-019"}, {"source": "res-024", "target": "res-014"}, {"source": "res-024", "target": "res-020"}, {"source": "res-025", "target": "res-027"}, {"source": "res-025", "target": "res-010"}, {"source": "res-026", "target": "res-018"}, {"source": "res-026", "target": "res-017"}, {"source": "res-027", "target": "res-010"}, {"source": "res-027", "target": "res-025"}, {"source": "res-028", "target": "res-021"}, {"source": "res-028", "target": "res-008"}, {"source": "res-029", "target": "res-017"}, {"source": "res-029", "target": "res-026"}, {"source": "res-030", "target": "res-015"}, {"source": "res-030", "target": "res-033"}, {"source": "res-031", "target": "res-026"}, {"source": "res-031", "target": "res-017"}, {"source": "res-032", "target": "res-012"}, {"source": "res-032", "target": "res-005"}, {"source": "res-033", "target": "res-015"}, {"source": "res-033", "target": "res-030"}, {"source": "res-034", "target": "res-011"}, {"source": "res-001", "target": "res-032"}, {"source": "res-007", "target": "res-002"}, {"source": "res-010", "target": "res-012"}, {"source": "res-015", "target": "res-029"}, {"source": "res-024", "target": "res-023"}, {"source": "res-027", "target": "res-002"}], "fix_list": [{"resource_id": "res-002", "type": "LoadBalancer", "vpc": "Shared-Services", "risk_score_0_100": 100.0, "trend_label": "rising", "total_monthly_cost": 209.574, "high_risk_high_cost_flag": true}, {"resource_id": "res-007", "type": "Lambda", "vpc": "Production", "risk_score_0_100": 62.5, "trend_label": "rising", "total_monthly_cost": 61.542, "high_risk_high_cost_flag": false}, {"resource_id": "res-015", "type": "S3", "vpc": "Staging", "risk_score_0_100": 60.72, "trend_label": "rising", "total_monthly_cost": 105.48, "high_risk_high_cost_flag": false}, {"resource_id": "res-023", "type": "S3", "vpc": "Shared-Services", "risk_score_0_100": 22.49, "trend_label": "flat", "total_monthly_cost": 47.12, "high_risk_high_cost_flag": false}, {"resource_id": "res-013", "type": "EC2", "vpc": "Shared-Services", "risk_score_0_100": 16.74, "trend_label": "flat", "total_monthly_cost": 225.33, "high_risk_high_cost_flag": true}, {"resource_id": "res-016", "type": "RDS", "vpc": "Staging", "risk_score_0_100": 15.71, "trend_label": "flat", "total_monthly_cost": 297.42, "high_risk_high_cost_flag": true}, {"resource_id": "res-021", "type": "RDS", "vpc": "Production", "risk_score_0_100": 15.5, "trend_label": "flat", "total_monthly_cost": 342.5, "high_risk_high_cost_flag": true}, {"resource_id": "res-010", "type": "Lambda", "vpc": "Production", "risk_score_0_100": 15.0, "trend_label": "flat", "total_monthly_cost": 34.18, "high_risk_high_cost_flag": false}, {"resource_id": "res-012", "type": "LoadBalancer", "vpc": "Shared-Services", "risk_score_0_100": 14.14, "trend_label": "flat", "total_monthly_cost": 104.45, "high_risk_high_cost_flag": false}, {"resource_id": "res-005", "type": "LoadBalancer", "vpc": "Shared-Services", "risk_score_0_100": 12.88, "trend_label": "improving", "total_monthly_cost": 122.56, "high_risk_high_cost_flag": false}], "generated": "September 13, 2026"};
+</script>
+<script>
+// ---------- helpers ----------
+function riskColor(score){
+  // 0-40 safe(green) -> 40-70 warn(amber) -> 70-100 danger(red)
+  if(score < 40) return '#2FB88A';
+  if(score < 70) return '#E8A23D';
+  return '#E2472D';
+}
+function fmtMoney(v){ return '$' + v.toFixed(2); }
+
+let selectedNode = null;
+let currentBadge = DATA.overall_badge;
+
+// ---------- graph ----------
+const svgNS = "http://www.w3.org/2000/svg";
+const graphSvg = document.getElementById('graph-svg');
+
+function radiusFor(blast){
+  return 5 + (blast/100) * 12; // 5px..17px
+}
+
+function drawGraph(){
+  graphSvg.innerHTML = '';
+  const nodeById = {};
+  DATA.nodes.forEach(n => nodeById[n.id] = n);
+
+  // edges first (so nodes sit on top)
+  DATA.edges.forEach(e => {
+    const a = nodeById[e.source], b = nodeById[e.target];
+    if(!a || !b) return;
+    const line = document.createElementNS(svgNS,'line');
+    line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+    line.setAttribute('class','edge-line');
+    graphSvg.appendChild(line);
+  });
+
+  // vpc zone labels
+  const zones = [
+    {label:'PRODUCTION', x:100, y:40},
+    {label:'STAGING', x:560, y:40},
+    {label:'SHARED-SERVICES', x:340, y:600}
+  ];
+  zones.forEach(z=>{
+    const t = document.createElementNS(svgNS,'text');
+    t.setAttribute('x', z.x); t.setAttribute('y', z.y);
+    t.setAttribute('class','vpc-label');
+    t.textContent = z.label;
+    graphSvg.appendChild(t);
+  });
+
+  DATA.nodes.forEach(n => {
+    const c = document.createElementNS(svgNS,'circle');
+    c.setAttribute('cx', n.x); c.setAttribute('cy', n.y);
+    c.setAttribute('r', radiusFor(n.blast_radius_score));
+    c.setAttribute('fill', riskColor(n.risk_score));
+    c.setAttribute('class', 'node-circle' + (selectedNode===n.id ? ' selected' : ''));
+    c.setAttribute('data-id', n.id);
+    c.addEventListener('click', () => selectNode(n.id));
+    graphSvg.appendChild(c);
+  });
+}
+
+function selectNode(id){
+  selectedNode = id;
+  drawGraph();
+  const n = DATA.nodes.find(x => x.id === id);
+  document.getElementById('detail-empty').style.display = 'none';
+  document.getElementById('detail-content').style.display = 'block';
+  document.getElementById('fix-result').style.display = 'none';
+
+  document.getElementById('d-id').textContent = n.id;
+  document.getElementById('d-meta').textContent = n.type + ' · ' + n.vpc;
+  document.getElementById('d-risk').textContent = n.risk_score.toFixed(1) + ' / 100';
+  document.getElementById('d-risk').style.color = riskColor(n.risk_score);
+  document.getElementById('d-blast').textContent = n.blast_radius_score.toFixed(1);
+  document.getElementById('d-vuln').textContent = n.vulnerability_score.toFixed(1);
+  document.getElementById('d-trend').textContent = n.trend_label;
+  document.getElementById('d-cost').textContent = fmtMoney(n.cost) + '/mo';
+
+  const flags = document.getElementById('d-flags');
+  flags.innerHTML = '';
+  const addFlag = (text, bad) => {
+    const s = document.createElement('span');
+    s.className = 'flag ' + (bad ? 'bad' : 'ok');
+    s.textContent = text;
+    flags.appendChild(s);
+  };
+  addFlag(n.is_public ? 'Public-facing' : 'Private', n.is_public);
+  addFlag('IAM: ' + n.iam, n.iam === 'admin-level' || n.iam === 'over-permissioned');
+  addFlag(n.encrypted ? 'Encrypted' : 'Not encrypted', !n.encrypted);
+  addFlag(n.mfa ? 'MFA enforced' : 'No MFA', !n.mfa);
+  if(n.high_risk_high_cost) addFlag('High-risk + high-cost', true);
+
+  const btn = document.getElementById('fix-btn');
+  btn.disabled = false;
+  btn.textContent = 'Simulate Fix';
+  btn.onclick = () => simulateFix(n);
+}
+
+function simulateFix(n){
+  const badgeFrom = currentBadge;
+  const badgeTo = n.fix_new_badge;
+  const nodeFrom = n.risk_score;
+  const nodeTo = n.fix_new_node_score;
+
+  document.getElementById('fix-result').style.display = 'block';
+  document.getElementById('fr-badge-from').textContent = badgeFrom;
+  document.getElementById('fr-badge-to').textContent = badgeTo;
+  document.getElementById('fr-node-from').textContent = nodeFrom.toFixed(1);
+  document.getElementById('fr-node-to').textContent = nodeTo.toFixed(1);
+
+  animateBadge(badgeFrom, badgeTo);
+  currentBadge = badgeTo;
+
+  // reflect the fix visually on the graph node
+  n.risk_score = nodeTo;
+  document.getElementById('fix-btn').disabled = true;
+  document.getElementById('fix-btn').textContent = 'Fix Applied';
+  drawGraph();
+  // re-select to refresh detail panel colors
+  const preserved = selectedNode;
+  selectedNode = preserved;
+}
+
+function animateBadge(from, to){
+  const el = document.getElementById('badge-value');
+  const steps = 20;
+  let i = 0;
+  const diff = to - from;
+  const timer = setInterval(() => {
+    i++;
+    const val = Math.round(from + (diff * i/steps));
+    el.textContent = val;
+    el.parentElement.style.color = to >= from ? 'var(--safe)' : 'var(--danger)';
+    if(i >= steps){ clearInterval(timer); el.textContent = to; }
+  }, 25);
+}
+
+// ---------- fix-list table ----------
+function drawFixList(){
+  const tbody = document.querySelector('#fixlist-table tbody');
+  tbody.innerHTML = '';
+  DATA.fix_list.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="mono">${row.resource_id}</td>
+      <td>${row.type}</td>
+      <td>${row.vpc}</td>
+      <td class="mono" style="color:${riskColor(row.risk_score_0_100)}">${row.risk_score_0_100.toFixed(1)}</td>
+      <td>${row.trend_label}</td>
+      <td class="mono">${fmtMoney(row.total_monthly_cost)}</td>
+      <td>${row.high_risk_high_cost_flag ? '<span class="tag" style="background:rgba(226,71,45,.15); color:#E2472D;">HIGH+COST</span>' : ''}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- cost vs risk scatter ----------
+function drawScatter(){
+  const svg = document.getElementById('scatter-svg');
+  svg.innerHTML = '';
+  const W=420,H=300,M=36;
+  const costs = DATA.nodes.map(n=>n.cost);
+  const maxCost = Math.max(...costs) * 1.08;
+
+  // axes
+  const axisX = document.createElementNS(svgNS,'line');
+  axisX.setAttribute('x1',M); axisX.setAttribute('y1',H-M);
+  axisX.setAttribute('x2',W-10); axisX.setAttribute('y2',H-M);
+  axisX.setAttribute('stroke','#33415C');
+  svg.appendChild(axisX);
+  const axisY = document.createElementNS(svgNS,'line');
+  axisY.setAttribute('x1',M); axisY.setAttribute('y1',10);
+  axisY.setAttribute('x2',M); axisY.setAttribute('y2',H-M);
+  axisY.setAttribute('stroke','#33415C');
+  svg.appendChild(axisY);
+
+  const lblX = document.createElementNS(svgNS,'text');
+  lblX.setAttribute('x', W/2); lblX.setAttribute('y', H-6);
+  lblX.setAttribute('class','axis-label'); lblX.setAttribute('text-anchor','middle');
+  lblX.textContent = 'Monthly cost ($)';
+  svg.appendChild(lblX);
+
+  const lblY = document.createElementNS(svgNS,'text');
+  lblY.setAttribute('x', 12); lblY.setAttribute('y', 14);
+  lblY.setAttribute('class','axis-label');
+  lblY.textContent = 'Risk';
+  svg.appendChild(lblY);
+
+  DATA.nodes.forEach(n => {
+    const x = M + (n.cost / maxCost) * (W - M - 20);
+    const y = (H-M) - (n.risk_score/100) * (H - M - 20);
+    const c = document.createElementNS(svgNS,'circle');
+    c.setAttribute('cx', x); c.setAttribute('cy', y);
+    c.setAttribute('r', n.high_risk_high_cost ? 6 : 4);
+    c.setAttribute('fill', n.high_risk_high_cost ? '#E2472D' : '#4FA6E0');
+    c.setAttribute('fill-opacity', n.high_risk_high_cost ? 0.9 : 0.55);
+    svg.appendChild(c);
+  });
+}
+
+// ---------- trend chart ----------
+function drawTrend(){
+  const svg = document.getElementById('trend-svg');
+  svg.innerHTML = '';
+  const W=420,H=300,M=36;
+
+  const rising = DATA.nodes.filter(n=>n.trend_label==='rising')
+                            .sort((a,b)=>b.risk_score-a.risk_score)
+                            .slice(0,3);
+  const colors = ['#E2472D','#E8A23D','#4FA6E0'];
+  const allVals = rising.flatMap(n=>n.sparkline);
+  const maxV = Math.max(...allVals, 10) * 1.1;
+
+  const axisX = document.createElementNS(svgNS,'line');
+  axisX.setAttribute('x1',M); axisX.setAttribute('y1',H-M);
+  axisX.setAttribute('x2',W-10); axisX.setAttribute('y2',H-M);
+  axisX.setAttribute('stroke','#33415C');
+  svg.appendChild(axisX);
+
+  rising.forEach((n, idx) => {
+    const pts = n.sparkline.map((v,i) => {
+      const x = M + (i/(n.sparkline.length-1)) * (W-M-20);
+      const y = (H-M) - (v/maxV) * (H-M-20);
+      return x+','+y;
+    }).join(' ');
+    const poly = document.createElementNS(svgNS,'polyline');
+    poly.setAttribute('points', pts);
+    poly.setAttribute('fill','none');
+    poly.setAttribute('stroke', colors[idx]);
+    poly.setAttribute('stroke-width','2');
+    svg.appendChild(poly);
+
+    const lbl = document.createElementNS(svgNS,'text');
+    lbl.setAttribute('x', W-10); lbl.setAttribute('y', 16 + idx*14);
+    lbl.setAttribute('class','axis-label'); lbl.setAttribute('text-anchor','end');
+    lbl.setAttribute('fill', colors[idx]);
+    lbl.textContent = n.id;
+    svg.appendChild(lbl);
+  });
+}
+
+// ---------- init ----------
+document.getElementById('gen-date').textContent = DATA.generated;
+document.getElementById('badge-value').textContent = DATA.overall_badge;
+drawGraph();
+drawFixList();
+drawScatter();
+drawTrend();
+
+</script>
+</body>
+</html>

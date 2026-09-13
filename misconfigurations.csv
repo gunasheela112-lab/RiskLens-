@@ -1,0 +1,36 @@
+resource_id,open_ports,iam_role_permissiveness,encryption_enabled,public_access_flag,mfa_enforced
+res-000,[],moderate,True,False,True
+res-001,[],least-privilege,False,False,True
+res-002,"[22, 80, 3389]",admin-level,False,True,False
+res-003,[22],moderate,False,False,True
+res-004,[443],moderate,True,False,True
+res-005,[443],over-permissioned,True,False,False
+res-006,[443],moderate,True,False,True
+res-007,"[22, 80, 3389]",admin-level,False,True,False
+res-008,"[22, 80]",least-privilege,True,True,True
+res-009,[],least-privilege,True,False,False
+res-010,[],least-privilege,True,True,False
+res-011,[22],least-privilege,False,False,True
+res-012,[],over-permissioned,True,False,True
+res-013,"[22, 80]",least-privilege,False,False,False
+res-014,"[22, 80, 3389]",least-privilege,True,False,False
+res-015,"[22, 80, 3389]",admin-level,False,True,False
+res-016,"[22, 80, 3389]",over-permissioned,True,False,False
+res-017,[],least-privilege,True,False,True
+res-018,"[22, 80, 3389]",moderate,True,False,True
+res-019,[],least-privilege,False,False,True
+res-020,[],least-privilege,True,False,False
+res-021,"[22, 80, 3389]",least-privilege,False,False,False
+res-022,"[22, 80, 3389]",least-privilege,True,False,True
+res-023,"[22, 80, 3389]",moderate,True,False,True
+res-024,[],least-privilege,False,False,True
+res-025,[],moderate,True,False,True
+res-026,[22],least-privilege,True,False,True
+res-027,[22],least-privilege,True,False,True
+res-028,[22],least-privilege,True,False,True
+res-029,"[22, 80]",least-privilege,True,True,True
+res-030,"[22, 80]",moderate,True,False,True
+res-031,[443],least-privilege,True,False,True
+res-032,[22],least-privilege,True,False,True
+res-033,[443],least-privilege,True,False,False
+res-034,"[22, 80]",least-privilege,False,False,True
