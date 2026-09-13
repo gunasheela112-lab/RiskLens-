@@ -1,0 +1,11 @@
+resource_id,type,vpc,risk_score_0_100,trend_label,total_monthly_cost,high_risk_high_cost_flag
+res-002,LoadBalancer,Shared-Services,100.0,rising,209.574,True
+res-007,Lambda,Production,62.5,rising,61.542,False
+res-015,S3,Staging,60.72,rising,105.48,False
+res-023,S3,Shared-Services,22.49,flat,47.12,False
+res-013,EC2,Shared-Services,16.73,flat,225.33,True
+res-016,RDS,Staging,15.72,flat,297.42,True
+res-021,RDS,Production,15.5,flat,342.5,True
+res-010,Lambda,Production,15.0,flat,34.18,False
+res-012,LoadBalancer,Shared-Services,14.14,flat,104.45,False
+res-005,LoadBalancer,Shared-Services,12.88,improving,122.56,False
