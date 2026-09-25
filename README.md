@@ -9,8 +9,6 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 **Live dashboard:** https://gunasheela112-lab.github.io/RiskLens-/
-**Analysis notebook (Colab):** https://colab.research.google.com/drive/1Y1y1dE_xD8kuW1TSc5FeXoY8YkdZqtfuW?usp=sharing
-
 > **Portfolio-ready demo:** RiskLens combines graph-based blast-radius analysis, security misconfiguration scoring, trend analysis, cloud-cost correlation, and interactive remediation simulation in one self-contained dashboard.
 
 ## Key Results
@@ -67,7 +65,7 @@ The [live dashboard](https://gunasheela112-lab.github.io/RiskLens-/) lets you ex
 
 ## Quick Start
 
-The dashboard requires no build step or backend. Open `index.html` directly in a browser, or use the [live GitHub Pages deployment](https://gunasheela112-lab.github.io/RiskLens-/). The analytical datasets and generated report are included in the repository for reproducibility.
+The dashboard requires no build step or backend. Open `index.html` directly in a browser, or use the [live GitHub Pages deployment](https://gunasheela112-lab.github.io/RiskLens-/). The analytical datasets, visualizations, and generated report are included in the repository for reproducibility.
 
 ## Validation & CI
 
@@ -78,7 +76,6 @@ A GitHub Actions workflow validates that the core dashboard, datasets, report, a
 | File | Purpose |
 |---|---|
 | `index.html` | Interactive dashboard (also live via GitHub Pages) |
-| Colab notebook (linked above) | Full data generation, scoring model, and analysis pipeline |
 | `nodes.csv`, `edges.csv` | Network topology |
 | `misconfigurations.csv` | Per-resource security configuration |
 | `risk_events.csv` | 120-day traffic/anomaly history |
