@@ -24,6 +24,17 @@
 
 ![Risk distribution](chart1_risk_distribution.png)
 
+## Dashboard Screenshots
+
+### Interactive Dashboard
+![RiskLens dashboard](dashboard.jpg)
+
+### Risk Analysis
+![Risk analysis](risk%20analysis.jpg)
+
+### Remediation Simulation
+![RiskLens remediation](risklens%20remediation.jpg)
+
 ---
 
 ## The Problem
@@ -76,6 +87,9 @@ A GitHub Actions workflow validates that the core dashboard, datasets, report, a
 | File | Purpose |
 |---|---|
 | `index.html` | Interactive dashboard (also live via GitHub Pages) |
+| `dashboard.jpg` | Main dashboard screenshot |
+| `risk analysis.jpg` | Risk analysis screenshot |
+| `risklens remediation.jpg` | Remediation simulation screenshot |
 | `nodes.csv`, `edges.csv` | Network topology |
 | `misconfigurations.csv` | Per-resource security configuration |
 | `risk_events.csv` | 120-day traffic/anomaly history |
