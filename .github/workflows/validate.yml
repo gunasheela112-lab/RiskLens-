@@ -1,0 +1,45 @@
+name: RiskLens Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required project artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_files=(
+            index.html
+            README.md
+            LICENSE
+            nodes.csv
+            edges.csv
+            misconfigurations.csv
+            risk_events.csv
+            cost_data.csv
+            risklens_scores.csv
+            risklens_fixlist_top10.csv
+            before_after_summary.csv
+            RiskLens_Report.pdf
+          )
+
+          for file in "${required_files[@]}"; do
+            test -s "$file" || { echo "Missing or empty required file: $file"; exit 1; }
+          done
+
+          chart_count=$(find . -maxdepth 1 -type f -name 'chart*.png' | wc -l)
+          test "$chart_count" -ge 5 || { echo "Expected at least 5 chart PNGs, found $chart_count"; exit 1; }
+
+          grep -q '<!DOCTYPE html>' index.html
+          grep -q 'RiskLens' index.html
+          echo "RiskLens project validation passed."
