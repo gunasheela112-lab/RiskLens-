@@ -1,7 +1,15 @@
 # RiskLens — Network Risk Intelligence Platform
 
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![Pandas](https://img.shields.io/badge/Pandas-Analytics-150458)
+![NetworkX](https://img.shields.io/badge/NetworkX-Graph%20Analysis-blue)
+![Scikit--learn](https://img.shields.io/badge/Scikit--learn-Machine%20Learning-F7931E)
+![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
+![GitHub Pages](https://img.shields.io/badge/Deployment-GitHub%20Pages-222222)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 **Live dashboard:** https://gunasheela112-lab.github.io/RiskLens-/
-**Analysis notebook (Colab):** https://colab.research.google.com/drive/1Y1y1dE_xD8kuW1TSc5FeXo8YkdZqtfuW?usp=sharing
+**Analysis notebook (Colab):** https://colab.research.google.com/drive/1Y1y1dE_xD8kuW1TSc5FeXoY8YkdZqtfuW?usp=sharing
 
 ---
 
