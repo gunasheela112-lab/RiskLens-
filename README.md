@@ -11,6 +11,21 @@
 **Live dashboard:** https://gunasheela112-lab.github.io/RiskLens-/
 **Analysis notebook (Colab):** https://colab.research.google.com/drive/1Y1y1dE_xD8kuW1TSc5FeXoY8YkdZqtfuW?usp=sharing
 
+> **Portfolio-ready demo:** RiskLens combines graph-based blast-radius analysis, security misconfiguration scoring, trend analysis, cloud-cost correlation, and interactive remediation simulation in one self-contained dashboard.
+
+## Key Results
+
+| Metric | Result |
+|---|---:|
+| Simulated resources | 35 |
+| VPCs analyzed | 3 |
+| Historical risk/traffic window | 120 days |
+| Network Risk Score | 863 / 1000 |
+| Highest-risk resource | `res-002` — 100 / 100 |
+| Simulated post-fix score | 891 / 1000 |
+
+![Risk distribution](chart1_risk_distribution.png)
+
 ---
 
 ## The Problem
@@ -50,6 +65,14 @@ The [live dashboard](https://gunasheela112-lab.github.io/RiskLens-/) lets you ex
 - Hit **Simulate Fix** on any resource and watch the Network Risk Score badge update live
 - Review the ranked fix-list, the cost-vs-risk scatter plot, and the 120-day trend lines for the fastest-rising resources
 
+## Quick Start
+
+The dashboard requires no build step or backend. Open `index.html` directly in a browser, or use the [live GitHub Pages deployment](https://gunasheela112-lab.github.io/RiskLens-/). The analytical datasets and generated report are included in the repository for reproducibility.
+
+## Validation & CI
+
+A GitHub Actions workflow validates that the core dashboard, datasets, report, and visualization artifacts remain present on every push and pull request. This helps prevent accidental breakage during future updates.
+
 ## What's in This Repo
 
 | File | Purpose |
@@ -71,5 +94,9 @@ The [live dashboard](https://gunasheela112-lab.github.io/RiskLens-/) lets you ex
 Python (pandas, NumPy, NetworkX, scikit-learn) for data generation, graph analysis, and trend forecasting · Matplotlib for visualization · ReportLab for PDF generation · vanilla HTML/CSS/JavaScript (SVG-based) for the interactive dashboard — no frameworks, fully self-contained, works offline once loaded.
 
 ---
+
+### Scope & Limitations
+
+RiskLens uses simulated AWS/network data and is intended for analysis and demonstration, not as a production security scanner. Risk scores are model outputs based on the documented simulated inputs and should not be interpreted as real-world security ratings without validation against live infrastructure and organization-specific risk criteria.
 
 *Built as a portfolio project demonstrating combined networking, cloud security, and data analysis skills. The underlying network is simulated for demonstration purposes.*
